@@ -3,12 +3,15 @@
 //  HMSegmentedControl
 //
 //  Created by Hesham Abd-Elmegid on 23/12/12.
-//  Copyright (c) 2012 Hesham Abd-Elmegid. All rights reserved.
+//  Copyright (c) 2012-2015 Hesham Abd-Elmegid. All rights reserved.
 //
 
 #import <UIKit/UIKit.h>
 
+@class HMSegmentedControl;
+
 typedef void (^IndexChangeBlock)(NSInteger index);
+typedef NSAttributedString *(^HMTitleFormatterBlock)(HMSegmentedControl *segmentedControl, NSString *title, NSUInteger index, BOOL selected);
 
 typedef enum {
     HMSegmentedControlSelectionStyleTextWidthStripe, // Indicator width will only be as big as the text width
@@ -28,6 +31,14 @@ typedef enum {
     HMSegmentedControlSegmentWidthStyleDynamic, // Segment width will only be as big as the text width (including inset)
 } HMSegmentedControlSegmentWidthStyle;
 
+typedef NS_OPTIONS(NSInteger, HMSegmentedControlBorderType) {
+    HMSegmentedControlBorderTypeNone = 0,
+    HMSegmentedControlBorderTypeTop = (1 << 0),
+    HMSegmentedControlBorderTypeLeft = (1 << 1),
+    HMSegmentedControlBorderTypeBottom = (1 << 2),
+    HMSegmentedControlBorderTypeRight = (1 << 3)
+};
+
 enum {
     HMSegmentedControlNoSegment = -1   // Segment index for no selected segment
 };
@@ -44,84 +55,89 @@ typedef enum {
 @property (nonatomic, strong) NSArray *sectionImages;
 @property (nonatomic, strong) NSArray *sectionSelectedImages;
 
-/*
+/**
  Provide a block to be executed when selected index is changed.
  
  Alternativly, you could use `addTarget:action:forControlEvents:`
  */
 @property (nonatomic, copy) IndexChangeBlock indexChangeBlock;
 
-/*
- Font for segments names when segmented control type is `HMSegmentedControlTypeText`
+/**
+ Used to apply custom text styling to titles when set.
  
- Default is [UIFont fontWithName:@"STHeitiSC-Light" size:18.0f]
+ When this block is set, no additional styling is applied to the `NSAttributedString` object returned from this block.
  */
-@property (nonatomic, strong) UIFont *font;
+@property (nonatomic, copy) HMTitleFormatterBlock titleFormatter;
+
+/**
+ Text attributes to apply to item title text.
+ */
+@property (nonatomic, strong) NSDictionary *titleTextAttributes UI_APPEARANCE_SELECTOR;
 
 /*
- Text color for segments names when segmented control type is `HMSegmentedControlTypeText`
+ Text attributes to apply to selected item title text.
  
- Default is [UIColor blackColor]
+ Attributes not set in this dictionary are inherited from `titleTextAttributes`.
  */
-@property (nonatomic, strong) UIColor *textColor;
+@property (nonatomic, strong) NSDictionary *selectedTitleTextAttributes UI_APPEARANCE_SELECTOR;
 
-/*
- Text color for selected segment name when segmented control type is `HMSegmentedControlTypeText`
- 
- Default is [UIColor blackColor]
- */
-@property (nonatomic, strong) UIColor *selectedTextColor;
-
-/*
+/**
  Segmented control background color.
  
- Default is [UIColor whiteColor]
+ Default is `[UIColor whiteColor]`
  */
-@property (nonatomic, strong) UIColor *backgroundColor;
+@property (nonatomic, strong) UIColor *backgroundColor UI_APPEARANCE_SELECTOR;
 
-/*
+/**
  Color for the selection indicator stripe/box
  
- Default is R:52, G:181, B:229
+ Default is `R:52, G:181, B:229`
  */
-@property (nonatomic, strong) UIColor *selectionIndicatorColor;
+@property (nonatomic, strong) UIColor *selectionIndicatorColor UI_APPEARANCE_SELECTOR;
 
-/*
- Color for the selection indicator stripe/box
+/**
+ Color for the vertical divider between segments.
  
- Default is self.textColor
+ Default is `[UIColor blackColor]`
  */
-@property (nonatomic, strong) UIColor *verticalDividerColor;
+@property (nonatomic, strong) UIColor *verticalDividerColor UI_APPEARANCE_SELECTOR;
 
-/*
- Opacity for the seletion inficator box.
+/**
+ Opacity for the seletion indicator box.
  
- Default is 0.2
+ Default is `0.2f`
  */
 @property (nonatomic) CGFloat selectionIndicatorBoxOpacity;
 
-/*
+/**
+ Width the vertical divider between segments that is added when `verticalDividerEnabled` is set to YES.
+ 
+ Default is `1.0f`
+ */
+@property (nonatomic, assign) CGFloat verticalDividerWidth;
+
+/**
  Specifies the style of the control
  
  Default is `HMSegmentedControlTypeText`
  */
 @property (nonatomic, assign) HMSegmentedControlType type;
 
-/*
+/**
  Specifies the style of the selection indicator.
  
  Default is `HMSegmentedControlSelectionStyleTextWidthStripe`
  */
 @property (nonatomic, assign) HMSegmentedControlSelectionStyle selectionStyle;
 
-/*
+/**
  Specifies the style of the segment's width.
  
  Default is `HMSegmentedControlSegmentWidthStyleFixed`
  */
 @property (nonatomic, assign) HMSegmentedControlSegmentWidthStyle segmentWidthStyle;
 
-/*
+/**
  Specifies the location of the selection indicator.
  
  Default is `HMSegmentedControlSelectionIndicatorLocationUp`
@@ -129,43 +145,54 @@ typedef enum {
 @property (nonatomic, assign) HMSegmentedControlSelectionIndicatorLocation selectionIndicatorLocation;
 
 /*
- Default is NO. Set to YES to allow for adding more tabs than the screen width could fit.
+ Specifies the border type.
  
- When set to YES, segment width will be automatically set to the width of the biggest segment's text or image,
- otherwise it will be equal to the width of the control's frame divided by the number of segments.
- 
- As of v 1.4 this is no longer needed. The control will manage scrolling automatically based on tabs sizes.
+ Default is `HMSegmentedControlBorderTypeNone`
  */
-@property(nonatomic, getter = isScrollEnabled) BOOL scrollEnabled DEPRECATED_ATTRIBUTE;
+@property (nonatomic, assign) HMSegmentedControlBorderType borderType;
 
-/*
+/**
+ Specifies the border color.
+ 
+ Default is `[UIColor blackColor]`
+ */
+@property (nonatomic, strong) UIColor *borderColor;
+
+/**
+ Specifies the border width.
+ 
+ Default is `1.0f`
+ */
+@property (nonatomic, assign) CGFloat borderWidth;
+
+/**
  Default is YES. Set to NO to deny scrolling by dragging the scrollView by the user.
  */
 @property(nonatomic, getter = isUserDraggable) BOOL userDraggable;
 
-/*
+/**
  Default is YES. Set to NO to deny any touch events by the user.
  */
 @property(nonatomic, getter = isTouchEnabled) BOOL touchEnabled;
 
-/*
- Default is NO. Set to YES to show the devider
+/**
+ Default is NO. Set to YES to show a vertical divider between the segments.
  */
-@property(nonatomic, getter = isShowVerticalDivider) BOOL showVerticalDivider;
+@property(nonatomic, getter = isVerticalDividerEnabled) BOOL verticalDividerEnabled;
 
-/*
+/**
  Index of the currently selected segment.
  */
 @property (nonatomic, assign) NSInteger selectedSegmentIndex;
 
-/*
+/**
  Height of the selection indicator. Only effective when `HMSegmentedControlSelectionStyle` is either `HMSegmentedControlSelectionStyleTextWidthStripe` or `HMSegmentedControlSelectionStyleFullWidthStripe`.
  
  Default is 5.0
  */
 @property (nonatomic, readwrite) CGFloat selectionIndicatorHeight;
 
-/*
+/**
  Edge insets for the selection indicator.
  NOTE: This does not affect the bounding box of HMSegmentedControlSelectionStyleBox
  
@@ -180,14 +207,14 @@ typedef enum {
  */
 @property (nonatomic, readwrite) UIEdgeInsets selectionIndicatorEdgeInsets;
 
-/*
- Inset left and right edges of segments. Only effective when `scrollEnabled` is set to YES.
+/**
+ Inset left and right edges of segments.
  
  Default is UIEdgeInsetsMake(0, 5, 0, 5)
  */
 @property (nonatomic, readwrite) UIEdgeInsets segmentEdgeInset;
 
-/*
+/**
  Default is YES. Set to NO to disable animation during user selection.
  */
 @property (nonatomic) BOOL shouldAnimateUserSelection;
@@ -197,5 +224,6 @@ typedef enum {
 - (instancetype)initWithSectionImages:(NSArray *)sectionImages sectionSelectedImages:(NSArray *)sectionSelectedImages titlesForSections:(NSArray *)sectiontitles;
 - (void)setSelectedSegmentIndex:(NSUInteger)index animated:(BOOL)animated;
 - (void)setIndexChangeBlock:(IndexChangeBlock)indexChangeBlock;
+- (void)setTitleFormatter:(HMTitleFormatterBlock)titleFormatter;
 
 @end
